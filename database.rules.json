@@ -1,0 +1,12 @@
+{
+  "rules": {
+    ".read": "auth != null && (auth.token.email == 'pathakmanu6395@gmail.com' || root.child('users').child(auth.uid).child('status').val() == 'active')",
+    ".write": "auth != null && auth.token.email == 'pathakmanu6395@gmail.com'",
+    "users": {
+      "$uid": {
+        ".read": "auth != null && (auth.token.email == 'pathakmanu6395@gmail.com' || $uid == auth.uid)",
+        ".write": "auth != null && (auth.token.email == 'pathakmanu6395@gmail.com' || $uid == auth.uid)"
+      }
+    }
+  }
+}
