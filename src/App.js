@@ -19,18 +19,19 @@ import AdminCoidng from './pages/AdminCoidng';
 import AdminProject from './pages/AdminProject';
 import AdminGYM from './pages/AdminGYM';
 import CourseViewer from './pages/CourseViewer';
+import AdminAddCodingQuestion from './pages/AdminAddCodin';
 
 function App() {
 
   return (
     <Routes>
 
-    
+
       <Route
         path="/"
         element={
           // <ProtectedRoute>
-            <Home />
+          <Home />
           // </ProtectedRoute>
         }
       />
@@ -43,7 +44,7 @@ function App() {
         path="/admin"
         element={
           // <ProtectedRoute adminOnly={true}>
-            <Admin />
+          <Admin />
           // </ProtectedRoute>
         }
       >
@@ -57,33 +58,37 @@ function App() {
         {/* /admin/category */}
         <Route
           path="category"
-          element={<AdminCategory/>}
+          element={<AdminCategory />}
         />
 
         {/* /admin/courses */}
         <Route
           path="courses"
-          element={<AdminCourse/>}
+          element={<AdminCourse />}
         />
-        
+
 
         <Route
           path="courses/:courseId/content"
-          element={<AdminCourseContent/>}
+          element={<AdminCourseContent />}
         />
 
         {/* /admin/gym */}
         <Route
           path="gym"
-          element={<AdminGYM/>}
+          element={<AdminGYM />}
         />
-         <Route
+        <Route
           path="coding"
-          element={<AdminCoidng/>}
+          element={<AdminCoidng />}
         />
-         <Route
+        <Route
+          path="coding/:questionId"
+          element={<AdminAddCodingQuestion />}
+        />
+        <Route
           path="projects"
-          element={<AdminProject/>}
+          element={<AdminProject />}
         />
 
       </Route>

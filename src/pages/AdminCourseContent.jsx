@@ -56,7 +56,7 @@ function LessonModal({
     <div className="fixed inset-0 z-[9999] bg-black/60 overflow-y-auto">
       <div className="min-h-screen flex items-start justify-center p-6">
         <div className="bg-white w-full max-w-6xl rounded-3xl shadow-2xl my-10">
-          
+
           {/* HEADER */}
 
           <div className="sticky top-0 bg-white z-10 border-b px-6 py-5 flex items-center justify-between rounded-t-3xl">
@@ -332,8 +332,22 @@ export default function AdminCourseContent() {
   |--------------------------------------------------------------------------
   */
 
+  /*
+ |--------------------------------------------------------------------------
+ | Delete Module
+ |--------------------------------------------------------------------------
+ */
+
   const handleDeleteModule =
-    async (moduleId) => {
+    async (moduleId, moduleName) => {
+
+      const confirmDelete =
+        window.confirm(
+          `Are you sure you want to delete module "${moduleName}" ?`
+        );
+
+      if (!confirmDelete) return;
+
       await deleteCourseModule(
         courseId,
         moduleId
@@ -382,8 +396,26 @@ export default function AdminCourseContent() {
   |--------------------------------------------------------------------------
   */
 
+  /*
+|--------------------------------------------------------------------------
+| Delete Lesson
+|--------------------------------------------------------------------------
+*/
+
   const handleDeleteLesson =
-    async (moduleId, lessonId) => {
+    async (
+      moduleId,
+      lessonId,
+      lessonName
+    ) => {
+
+      const confirmDelete =
+        window.confirm(
+          `Are you sure you want to delete lesson "${lessonName}" ?`
+        );
+
+      if (!confirmDelete) return;
+
       await deleteModuleLessons(
         courseId,
         moduleId,
@@ -455,7 +487,8 @@ export default function AdminCourseContent() {
                 <button
                   onClick={() =>
                     handleDeleteModule(
-                      module.id
+                      module.id,
+                      module.moduleName
                     )
                   }
                   className="p-2 rounded-xl bg-red-100 text-red-600"
@@ -554,10 +587,10 @@ export default function AdminCourseContent() {
               {(
                 module.lessons || []
               ).length === 0 && (
-                <div className="p-10 text-center text-slate-500">
-                  No Lessons Added
-                </div>
-              )}
+                  <div className="p-10 text-center text-slate-500">
+                    No Lessons Added
+                  </div>
+                )}
             </div>
           </div>
         ))}

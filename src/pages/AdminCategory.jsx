@@ -333,24 +333,31 @@ export default function AdminCategory() {
   */
 
   const handleDelete = async (category) => {
-    try {
-      const response = await deleteCategory(
-        category.id
+
+  const confirmDelete = window.confirm(
+    `Are you sure you want to delete "${category.categoryName}" ?`
+  );
+
+  if (!confirmDelete) return;
+
+  try {
+    const response = await deleteCategory(
+      category.id
+    );
+
+    if (response.success) {
+      setCategories((prev) =>
+        prev.filter(
+          (item) => item.id !== category.id
+        )
       );
-
-      if (response.success) {
-        setCategories((prev) =>
-          prev.filter(
-            (item) => item.id !== category.id
-          )
-        );
-      }
-    } catch (error) {
-      console.error(error);
-
-      alert("Delete failed");
     }
-  };
+  } catch (error) {
+    console.error(error);
+
+    alert("Delete failed");
+  }
+};
 
   /*
   |--------------------------------------------------------------------------
@@ -358,30 +365,43 @@ export default function AdminCategory() {
   |--------------------------------------------------------------------------
   */
 
-  const handleBulkDelete = async () => {
-    try {
-      setLoading(true);
+ /*
+|--------------------------------------------------------------------------
+| Bulk Delete
+|--------------------------------------------------------------------------
+*/
 
-      for (const id of selectedRows) {
-        await deleteCategory(id);
-      }
+const handleBulkDelete = async () => {
 
-      setCategories((prev) =>
-        prev.filter(
-          (item) =>
-            !selectedRows.includes(item.id)
-        )
-      );
+  const confirmDelete = window.confirm(
+    "Are you sure you want to delete selected categories?"
+  );
 
-      setSelectedRows([]);
-    } catch (error) {
-      console.error(error);
+  if (!confirmDelete) return;
 
-      alert("Bulk delete failed");
-    } finally {
-      setLoading(false);
+  try {
+    setLoading(true);
+
+    for (const id of selectedRows) {
+      await deleteCategory(id);
     }
-  };
+
+    setCategories((prev) =>
+      prev.filter(
+        (item) =>
+          !selectedRows.includes(item.id)
+      )
+    );
+
+    setSelectedRows([]);
+  } catch (error) {
+    console.error(error);
+
+    alert("Bulk delete failed");
+  } finally {
+    setLoading(false);
+  }
+};
 
   /*
   |--------------------------------------------------------------------------

@@ -59,8 +59,8 @@ function CourseModal({
         categoryId
       )
         ? prev.categoryIds.filter(
-            (id) => id !== categoryId
-          )
+          (id) => id !== categoryId
+        )
         : [...prev.categoryIds, categoryId],
     }));
   };
@@ -243,13 +243,12 @@ function CourseModal({
                         category.id
                       )
                     }
-                    className={`px-5 py-3 rounded-2xl border transition ${
-                      form.categoryIds.includes(
-                        category.id
-                      )
+                    className={`px-5 py-3 rounded-2xl border transition ${form.categoryIds.includes(
+                      category.id
+                    )
                         ? "bg-slate-900 text-white border-slate-900"
                         : "border-slate-300 text-slate-700"
-                    }`}
+                      }`}
                   >
                     {category.categoryName}
                   </button>
@@ -418,8 +417,8 @@ export default function AdminCourse() {
         filterCategory === "all"
           ? true
           : (
-              course.categoryIds || []
-            ).includes(filterCategory)
+            course.categoryIds || []
+          ).includes(filterCategory)
       );
   }, [
     courses,
@@ -450,7 +449,7 @@ export default function AdminCourse() {
           setCourses((prev) =>
             prev.map((item) =>
               item.id ===
-              selectedCourse.id
+                selectedCourse.id
                 ? response.data
                 : item
             )
@@ -476,7 +475,7 @@ export default function AdminCourse() {
 
       alert(
         error.message ||
-          "Course save failed"
+        "Course save failed"
       );
     } finally {
       setLoading(false);
@@ -489,9 +488,22 @@ export default function AdminCourse() {
   |--------------------------------------------------------------------------
   */
 
+  /*
+|--------------------------------------------------------------------------
+| Delete Course
+|--------------------------------------------------------------------------
+*/
+
   const handleDelete = async (
     course
   ) => {
+
+    const confirmDelete = window.confirm(
+      `Are you sure you want to delete "${course.courseName}" ?`
+    );
+
+    if (!confirmDelete) return;
+
     try {
       const response =
         await deleteCourse(course.id);
@@ -509,7 +521,7 @@ export default function AdminCourse() {
 
       alert(
         error.message ||
-          "Course delete failed"
+        "Course delete failed"
       );
     }
   };

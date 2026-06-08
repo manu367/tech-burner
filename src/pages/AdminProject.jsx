@@ -1,3 +1,5 @@
+// FILE: src/pages/AdminProject.jsx
+
 import { useEffect, useMemo, useState } from "react";
 
 import {
@@ -8,10 +10,20 @@ import {
   Search,
   FolderKanban,
   FileText,
-  Github,
   Globe,
   Eye,
 } from "lucide-react";
+
+import {
+  addProject,
+  deleteProject,
+  updateProject,
+  getAllProjects,
+} from "../api/projectdb";
+
+import {
+  getAllCategories,
+} from "../api/categorydb";
 
 /* =========================================
    DEFAULT IMAGE
@@ -21,20 +33,7 @@ const DEFAULT_IMAGE =
   "https://ibps-so-it.web.app/static/media/course.224cfb65f934c2d40a3a.jpg";
 
 /* =========================================
-   CATEGORY OPTIONS
-========================================= */
-
-const categoryOptions = [
-  "Frontend",
-  "Backend",
-  "Full Stack",
-  "AI",
-  "Mobile App",
-  "UI/UX",
-];
-
-/* =========================================
-   ADD / EDIT PROJECT MODAL
+   MODAL
 ========================================= */
 
 function ProjectModal({
@@ -42,43 +41,63 @@ function ProjectModal({
   onClose,
   onSave,
   editData,
+  categories,
 }) {
+  const [form, setForm] =
+    useState({
+      title: "",
+      description: "",
+      image: "",
+      category: "",
+      techStack: "",
+      github: "",
+      live: "",
+      documentation: "",
+      status: "In Progress",
+    });
 
-  const [form, setForm] = useState({
-    title: "",
-    description: "",
-    image: "",
-    category: "",
-    techStack: "",
-    github: "",
-    live: "",
-    documentation: "",
-    status: "In Progress",
-  });
+  /*
+  |--------------------------------------------------------------------------
+  | EDIT DATA
+  |--------------------------------------------------------------------------
+  */
 
-  /* LOAD EDIT DATA */
   useEffect(() => {
-
     if (editData) {
-
       setForm({
-        title: editData.title,
+        title:
+          editData.title || "",
+
         description:
-          editData.description,
-        image: editData.image,
+          editData.description ||
+          "",
+
+        image:
+          editData.image || "",
+
         category:
-          editData.category,
+          editData.category ||
+          "",
+
         techStack:
-          editData.techStack,
-        github: editData.github,
-        live: editData.live,
+          editData.techStack ||
+          "",
+
+        github:
+          editData.github || "",
+
+        live:
+          editData.live || "",
+
         documentation:
-          editData.documentation,
-        status: editData.status,
+          editData.documentation ||
+          "",
+
+        status:
+          editData.status ||
+          "In Progress",
       });
-
     } else {
-
       setForm({
         title: "",
         description: "",
@@ -91,61 +110,40 @@ function ProjectModal({
         status: "In Progress",
       });
     }
+  }, [editData, open]);
 
-  }, [editData]);
+  /*
+  |--------------------------------------------------------------------------
+  | SAVE
+  |--------------------------------------------------------------------------
+  */
 
-  /* SAVE */
   const handleSubmit = () => {
+    if (!form.title.trim()) {
+      alert(
+        "Project title required"
+      );
 
-    if (!form.title.trim()) return;
+      return;
+    }
 
-    onSave({
-      id: editData
-        ? editData.id
-        : Date.now(),
-
-      createdAt: editData
-        ? editData.createdAt
-        : new Date(),
-
-      ...form,
-    });
-
-    onClose();
+    onSave(form);
   };
 
   if (!open) return null;
 
   return (
-    <div
-      className="
-        fixed inset-0 z-50
-        bg-black/40
-        overflow-y-auto
-        p-4
-      "
-    >
+    <div className="fixed inset-0 z-[9999] bg-black/50 overflow-y-auto">
 
-      <div
-        className="
-          min-h-full
-          flex items-start justify-center
-          py-10
-        "
-      >
+      <div className="min-h-screen flex items-start justify-center p-6">
 
-        <div
-          className="
-            bg-white
-            w-full max-w-3xl
-            rounded-3xl shadow-xl
-          "
-        >
+        <div className="bg-white w-full max-w-4xl rounded-3xl shadow-2xl my-10">
 
           {/* HEADER */}
-          <div className="flex items-center justify-between p-6 border-b">
 
-            <h2 className="text-2xl font-bold text-slate-800">
+          <div className="sticky top-0 bg-white z-10 border-b px-6 py-5 flex items-center justify-between rounded-t-3xl">
+
+            <h2 className="text-3xl font-black text-slate-800">
 
               {editData
                 ? "Edit Project"
@@ -153,19 +151,24 @@ function ProjectModal({
 
             </h2>
 
-            <button onClick={onClose}>
+            <button
+              onClick={onClose}
+              className="p-2 rounded-xl hover:bg-slate-100"
+            >
               <X />
             </button>
 
           </div>
 
           {/* BODY */}
+
           <div className="p-6 space-y-6">
 
             {/* TITLE */}
+
             <div>
 
-              <label className="block mb-2 font-medium">
+              <label className="block mb-2 font-medium text-slate-700">
                 Project Title
               </label>
 
@@ -176,29 +179,29 @@ function ProjectModal({
                 onChange={(e) =>
                   setForm({
                     ...form,
-                    title: e.target.value,
+                    title:
+                      e.target.value,
                   })
                 }
-                className="
-                  w-full border border-slate-300
-                  rounded-xl px-4 py-3
-                  outline-none
-                "
+                className="w-full border border-slate-300 rounded-2xl px-4 py-3 outline-none"
               />
 
             </div>
 
             {/* DESCRIPTION */}
+
             <div>
 
-              <label className="block mb-2 font-medium">
+              <label className="block mb-2 font-medium text-slate-700">
                 Description
               </label>
 
               <textarea
-                rows="4"
+                rows="5"
                 placeholder="Enter project description"
-                value={form.description}
+                value={
+                  form.description
+                }
                 onChange={(e) =>
                   setForm({
                     ...form,
@@ -206,19 +209,16 @@ function ProjectModal({
                       e.target.value,
                   })
                 }
-                className="
-                  w-full border border-slate-300
-                  rounded-xl px-4 py-3
-                  outline-none resize-none
-                "
+                className="w-full border border-slate-300 rounded-2xl px-4 py-3 outline-none resize-none"
               />
 
             </div>
 
             {/* IMAGE */}
+
             <div>
 
-              <label className="block mb-2 font-medium">
+              <label className="block mb-2 font-medium text-slate-700">
                 Image URL
               </label>
 
@@ -229,14 +229,11 @@ function ProjectModal({
                 onChange={(e) =>
                   setForm({
                     ...form,
-                    image: e.target.value,
+                    image:
+                      e.target.value,
                   })
                 }
-                className="
-                  w-full border border-slate-300
-                  rounded-xl px-4 py-3
-                  outline-none
-                "
+                className="w-full border border-slate-300 rounded-2xl px-4 py-3 outline-none"
               />
 
               <img
@@ -244,31 +241,28 @@ function ProjectModal({
                   form.image ||
                   DEFAULT_IMAGE
                 }
-
                 onError={(e) => {
-                  e.target.src =
+                  e.currentTarget.src =
                     DEFAULT_IMAGE;
                 }}
-
                 alt="preview"
-
-                className="
-                  w-full h-56 object-cover
-                  rounded-2xl mt-4
-                "
+                className="w-full h-64 object-cover rounded-3xl mt-5 border border-slate-200"
               />
 
             </div>
 
             {/* CATEGORY */}
+
             <div>
 
-              <label className="block mb-2 font-medium">
+              <label className="block mb-2 font-medium text-slate-700">
                 Category
               </label>
 
               <select
-                value={form.category}
+                value={
+                  form.category
+                }
                 onChange={(e) =>
                   setForm({
                     ...form,
@@ -276,27 +270,28 @@ function ProjectModal({
                       e.target.value,
                   })
                 }
-                className="
-                  w-full border border-slate-300
-                  rounded-xl px-4 py-3
-                  outline-none
-                "
+                className="w-full border border-slate-300 rounded-2xl px-4 py-3 outline-none"
               >
 
                 <option value="">
                   Select Category
                 </option>
 
-                {categoryOptions.map(
-                  (category, index) => (
-
+                {categories.map(
+                  (
+                    category
+                  ) => (
                     <option
-                      key={index}
-                      value={category}
+                      key={
+                        category.id
+                      }
+                      value={
+                        category.id
+                      }
                     >
-
-                      {category}
-
+                      {
+                        category.categoryName
+                      }
                     </option>
                   )
                 )}
@@ -306,16 +301,19 @@ function ProjectModal({
             </div>
 
             {/* TECH STACK */}
+
             <div>
 
-              <label className="block mb-2 font-medium">
+              <label className="block mb-2 font-medium text-slate-700">
                 Tech Stack
               </label>
 
               <input
                 type="text"
                 placeholder="React, Node, MongoDB"
-                value={form.techStack}
+                value={
+                  form.techStack
+                }
                 onChange={(e) =>
                   setForm({
                     ...form,
@@ -323,80 +321,77 @@ function ProjectModal({
                       e.target.value,
                   })
                 }
-                className="
-                  w-full border border-slate-300
-                  rounded-xl px-4 py-3
-                  outline-none
-                "
+                className="w-full border border-slate-300 rounded-2xl px-4 py-3 outline-none"
               />
 
             </div>
 
-            {/* GITHUB */}
-            <div>
+            {/* LINKS */}
 
-              <label className="block mb-2 font-medium">
-                Github URL
-              </label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
 
-              <input
-                type="text"
-                placeholder="Github link"
-                value={form.github}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    github:
-                      e.target.value,
-                  })
-                }
-                className="
-                  w-full border border-slate-300
-                  rounded-xl px-4 py-3
-                  outline-none
-                "
-              />
+              <div>
 
-            </div>
+                <label className="block mb-2 font-medium text-slate-700">
+                  Github URL
+                </label>
 
-            {/* LIVE */}
-            <div>
+                <input
+                  type="text"
+                  placeholder="Github link"
+                  value={
+                    form.github
+                  }
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      github:
+                        e.target.value,
+                    })
+                  }
+                  className="w-full border border-slate-300 rounded-2xl px-4 py-3 outline-none"
+                />
 
-              <label className="block mb-2 font-medium">
-                Live URL
-              </label>
+              </div>
 
-              <input
-                type="text"
-                placeholder="Live project link"
-                value={form.live}
-                onChange={(e) =>
-                  setForm({
-                    ...form,
-                    live:
-                      e.target.value,
-                  })
-                }
-                className="
-                  w-full border border-slate-300
-                  rounded-xl px-4 py-3
-                  outline-none
-                "
-              />
+              <div>
+
+                <label className="block mb-2 font-medium text-slate-700">
+                  Live URL
+                </label>
+
+                <input
+                  type="text"
+                  placeholder="Live project link"
+                  value={form.live}
+                  onChange={(e) =>
+                    setForm({
+                      ...form,
+                      live:
+                        e.target.value,
+                    })
+                  }
+                  className="w-full border border-slate-300 rounded-2xl px-4 py-3 outline-none"
+                />
+
+              </div>
 
             </div>
 
-            {/* DOCS */}
+            {/* DOC */}
+
             <div>
 
-              <label className="block mb-2 font-medium">
+              <label className="block mb-2 font-medium text-slate-700">
                 Documentation
               </label>
 
               <textarea
-                rows="5"
+                rows="6"
                 placeholder="Write documentation..."
-                value={form.documentation}
+                value={
+                  form.documentation
+                }
                 onChange={(e) =>
                   setForm({
                     ...form,
@@ -404,24 +399,23 @@ function ProjectModal({
                       e.target.value,
                   })
                 }
-                className="
-                  w-full border border-slate-300
-                  rounded-xl px-4 py-3
-                  outline-none resize-none
-                "
+                className="w-full border border-slate-300 rounded-2xl px-4 py-3 outline-none resize-none"
               />
 
             </div>
 
             {/* STATUS */}
+
             <div>
 
-              <label className="block mb-2 font-medium">
+              <label className="block mb-2 font-medium text-slate-700">
                 Project Status
               </label>
 
               <select
-                value={form.status}
+                value={
+                  form.status
+                }
                 onChange={(e) =>
                   setForm({
                     ...form,
@@ -429,11 +423,7 @@ function ProjectModal({
                       e.target.value,
                   })
                 }
-                className="
-                  w-full border border-slate-300
-                  rounded-xl px-4 py-3
-                  outline-none
-                "
+                className="w-full border border-slate-300 rounded-2xl px-4 py-3 outline-none"
               >
 
                 <option>
@@ -455,24 +445,19 @@ function ProjectModal({
           </div>
 
           {/* FOOTER */}
-          <div className="p-6 border-t flex justify-end gap-3">
+
+          <div className="sticky bottom-0 bg-white border-t px-6 py-5 flex justify-end gap-3 rounded-b-3xl">
 
             <button
               onClick={onClose}
-              className="
-                px-5 py-3 rounded-xl
-                border border-slate-300
-              "
+              className="px-5 py-3 rounded-2xl border border-slate-300"
             >
               Cancel
             </button>
 
             <button
               onClick={handleSubmit}
-              className="
-                px-5 py-3 rounded-xl
-                bg-slate-900 text-white
-              "
+              className="px-5 py-3 rounded-2xl bg-slate-900 text-white"
             >
 
               {editData
@@ -492,74 +477,14 @@ function ProjectModal({
 }
 
 /* =========================================
-   DELETE MODAL
-========================================= */
-
-function DeleteModal({
-  open,
-  onClose,
-  onDelete,
-}) {
-
-  if (!open) return null;
-
-  return (
-    <div
-      className="
-        fixed inset-0 z-50
-        bg-black/40
-        flex items-center justify-center
-        p-4
-      "
-    >
-
-      <div className="bg-white w-full max-w-md rounded-2xl p-6">
-
-        <h2 className="text-2xl font-bold mb-4">
-          Delete Project
-        </h2>
-
-        <p className="text-slate-600 mb-6">
-          Are you sure you want to delete this project?
-        </p>
-
-        <div className="flex justify-end gap-3">
-
-          <button
-            onClick={onClose}
-            className="
-              px-5 py-2 rounded-xl
-              border border-slate-300
-            "
-          >
-            Cancel
-          </button>
-
-          <button
-            onClick={onDelete}
-            className="
-              px-5 py-2 rounded-xl
-              bg-red-500 text-white
-            "
-          >
-            Delete
-          </button>
-
-        </div>
-
-      </div>
-
-    </div>
-  );
-}
-
-/* =========================================
    MAIN COMPONENT
 ========================================= */
 
 export default function AdminProject() {
-
   const [projects, setProjects] =
+    useState([]);
+
+  const [categories, setCategories] =
     useState([]);
 
   const [search, setSearch] =
@@ -571,108 +496,259 @@ export default function AdminProject() {
   const [modalOpen, setModalOpen] =
     useState(false);
 
-  const [deleteModal, setDeleteModal] =
-    useState(false);
-
   const [selectedProject, setSelectedProject] =
     useState(null);
 
-  /* FILTER */
-  const filteredProjects = useMemo(() => {
+  const [loading, setLoading] =
+    useState(false);
 
-    return projects.filter((item) => {
+  /*
+  |--------------------------------------------------------------------------
+  | FETCH PROJECTS
+  |--------------------------------------------------------------------------
+  */
 
-      const matchSearch =
-        item.title
-          .toLowerCase()
-          .includes(search.toLowerCase());
+  useEffect(() => {
+    fetchProjects();
+  }, []);
 
-      const matchCategory =
-        filterCategory === "all"
-          ? true
-          : item.category ===
-            filterCategory;
+  const fetchProjects =
+    async () => {
+      try {
+        setLoading(true);
 
-      return (
-        matchSearch &&
-        matchCategory
+        const response =
+          await getAllProjects();
+
+        if (
+          response.success
+        ) {
+          setProjects(
+            response.data || []
+          );
+        }
+      } catch (error) {
+        console.error(error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+  /*
+  |--------------------------------------------------------------------------
+  | FETCH CATEGORIES
+  |--------------------------------------------------------------------------
+  */
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
+
+  const fetchCategories =
+    async () => {
+      try {
+        const response =
+          await getAllCategories();
+
+        if (response.success) {
+          const activeCategories =
+            response.data.filter(
+              (item) =>
+                item.status ===
+                "active"
+            );
+
+          setCategories(
+            activeCategories
+          );
+        }
+      } catch (error) {
+        console.error(error);
+      }
+    };
+
+  /*
+  |--------------------------------------------------------------------------
+  | CATEGORY MAP
+  |--------------------------------------------------------------------------
+  */
+
+  const categoryMap = useMemo(
+    () =>
+      categories.reduce(
+        (acc, category) => {
+          acc[category.id] =
+            category.categoryName;
+
+          return acc;
+        },
+        {}
+      ),
+    [categories]
+  );
+
+  /*
+  |--------------------------------------------------------------------------
+  | FILTER
+  |--------------------------------------------------------------------------
+  */
+
+  const filteredProjects =
+    useMemo(() => {
+      return projects.filter(
+        (item) => {
+          const matchSearch =
+            (
+              item.title || ""
+            )
+              .toLowerCase()
+              .includes(
+                search.toLowerCase()
+              );
+
+          const matchCategory =
+            filterCategory ===
+            "all"
+              ? true
+              : item.category ===
+                filterCategory;
+
+          return (
+            matchSearch &&
+            matchCategory
+          );
+        }
       );
-    });
+    }, [
+      projects,
+      search,
+      filterCategory,
+    ]);
 
-  }, [
-    projects,
-    search,
-    filterCategory,
-  ]);
+  /*
+  |--------------------------------------------------------------------------
+  | SAVE
+  |--------------------------------------------------------------------------
+  */
 
-  /* SAVE */
-  const handleSave = (data) => {
+  const handleSave =
+    async (data) => {
+      try {
+        if (
+          selectedProject
+        ) {
+          const response =
+            await updateProject(
+              selectedProject.id,
+              data
+            );
 
-    const exists = projects.find(
-      (item) => item.id === data.id
-    );
+          if (
+            response.success
+          ) {
+            setProjects(
+              (prev) =>
+                prev.map(
+                  (item) =>
+                    item.id ===
+                    selectedProject.id
+                      ? response.data
+                      : item
+                )
+            );
+          }
+        } else {
+          const response =
+            await addProject(
+              data
+            );
 
-    if (exists) {
+          if (
+            response.success
+          ) {
+            setProjects(
+              (prev) => [
+                response.data,
+                ...prev,
+              ]
+            );
+          }
+        }
 
-      setProjects(
-        projects.map((item) =>
-          item.id === data.id
-            ? data
-            : item
-        )
-      );
+        setModalOpen(false);
 
-    } else {
+        setSelectedProject(
+          null
+        );
+      } catch (error) {
+        alert(
+          error.message ||
+            "Project save failed"
+        );
+      }
+    };
 
-      setProjects([
-        data,
-        ...projects,
-      ]);
-    }
-  };
+  /*
+  |--------------------------------------------------------------------------
+  | DELETE
+  |--------------------------------------------------------------------------
+  */
 
-  /* EDIT */
-  const handleEdit = (item) => {
+  const handleDelete =
+    async (item) => {
+      const confirmDelete =
+        window.confirm(
+          `Delete "${item.title}" project ?`
+        );
 
-    setSelectedProject(item);
+      if (
+        !confirmDelete
+      ) {
+        return;
+      }
 
-    setModalOpen(true);
-  };
+      try {
+        const response =
+          await deleteProject(
+            item.id
+          );
 
-  /* DELETE */
-  const handleDeleteClick = (item) => {
-
-    setSelectedProject(item);
-
-    setDeleteModal(true);
-  };
-
-  const handleDelete = () => {
-
-    setProjects(
-      projects.filter(
-        (item) =>
-          item.id !== selectedProject.id
-      )
-    );
-
-    setDeleteModal(false);
-  };
+        if (
+          response.success
+        ) {
+          setProjects(
+            (prev) =>
+              prev.filter(
+                (project) =>
+                  project.id !==
+                  item.id
+              )
+          );
+        }
+      } catch (error) {
+        alert(
+          error.message ||
+            "Delete failed"
+        );
+      }
+    };
 
   return (
-    <div>
+    <div className="p-6">
 
       {/* TOPBAR */}
+
       <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4 mb-8">
 
         <div>
 
-          <h1 className="text-3xl font-bold text-slate-800">
+          <h1 className="text-4xl font-black text-slate-800">
             Projects
           </h1>
 
-          <p className="text-slate-500 mt-1">
-            Manage your projects & documentation
+          <p className="text-slate-500 mt-2">
+            Manage projects &
+            documentation
           </p>
 
         </div>
@@ -680,15 +756,12 @@ export default function AdminProject() {
         <div className="flex flex-wrap gap-3">
 
           {/* SEARCH */}
+
           <div className="relative">
 
             <Search
               size={18}
-              className="
-                absolute left-3 top-1/2
-                -translate-y-1/2
-                text-slate-400
-              "
+              className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400"
             />
 
             <input
@@ -696,62 +769,59 @@ export default function AdminProject() {
               placeholder="Search project..."
               value={search}
               onChange={(e) =>
-                setSearch(e.target.value)
+                setSearch(
+                  e.target.value
+                )
               }
-              className="
-                pl-10 pr-4 py-3 rounded-xl
-                border border-slate-300
-                outline-none
-              "
+              className="pl-10 pr-4 py-3 rounded-2xl border border-slate-300 outline-none"
             />
 
           </div>
 
           {/* FILTER */}
+
           <select
-            value={filterCategory}
+            value={
+              filterCategory
+            }
             onChange={(e) =>
               setFilterCategory(
                 e.target.value
               )
             }
-            className="
-              px-4 py-3 rounded-xl
-              border border-slate-300
-            "
+            className="px-4 py-3 rounded-2xl border border-slate-300"
           >
 
             <option value="all">
               All Categories
             </option>
 
-            {categoryOptions.map(
-              (category, index) => (
-
+            {categories.map(
+              (category) => (
                 <option
-                  key={index}
-                  value={category}
+                  key={category.id}
+                  value={category.id}
                 >
-
-                  {category}
-
+                  {
+                    category.categoryName
+                  }
                 </option>
               )
             )}
 
           </select>
 
-          {/* ADD BUTTON */}
+          {/* BUTTON */}
+
           <button
             onClick={() => {
-              setSelectedProject(null);
+              setSelectedProject(
+                null
+              );
+
               setModalOpen(true);
             }}
-            className="
-              flex items-center gap-2
-              bg-slate-900 text-white
-              px-5 py-3 rounded-xl
-            "
+            className="flex items-center gap-2 bg-slate-900 text-white px-5 py-3 rounded-2xl"
           >
 
             <Plus size={20} />
@@ -764,265 +834,230 @@ export default function AdminProject() {
 
       </div>
 
-      {/* PROJECT GRID */}
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+      {/* LOADING */}
 
-        {filteredProjects.map((item) => (
+      {loading ? (
+        <div className="bg-white rounded-3xl border border-slate-200 p-20 text-center">
 
-          <div
-            key={item.id}
-            className="
-              bg-white rounded-3xl
-              overflow-hidden
-              border border-slate-200
-              shadow-sm
-            "
-          >
+          <h2 className="text-3xl font-black text-slate-700">
+            Loading...
+          </h2>
 
-            {/* IMAGE */}
-            <img
-              src={
-                item.image ||
-                DEFAULT_IMAGE
-              }
+        </div>
+      ) : filteredProjects.length ===
+        0 ? (
+        <div className="bg-white rounded-3xl border border-slate-200 p-20 text-center">
 
-              onError={(e) => {
-                e.target.src =
-                  DEFAULT_IMAGE;
-              }}
-
-              alt={item.title}
-
-              className="
-                w-full h-56 object-cover
-              "
-            />
-
-            {/* BODY */}
-            <div className="p-5">
-
-              {/* TITLE */}
-              <div className="flex items-start justify-between gap-3">
-
-                <h2 className="text-2xl font-bold text-slate-800">
-                  {item.title}
-                </h2>
-
-                <FolderKanban size={24} />
-
-              </div>
-
-              {/* DESCRIPTION */}
-              <p className="text-slate-500 mt-3 line-clamp-3">
-
-                {item.description}
-
-              </p>
-
-              {/* TAGS */}
-              <div className="flex flex-wrap gap-2 mt-5">
-
-                <span
-                  className="
-                    px-3 py-1 rounded-full
-                    bg-slate-100
-                    text-sm text-slate-700
-                  "
-                >
-                  {item.category}
-                </span>
-
-                <span
-                  className={`
-                    px-3 py-1 rounded-full
-                    text-sm
-                    ${
-                      item.status ===
-                      "Completed"
-                        ? "bg-green-100 text-green-700"
-                        : item.status ===
-                          "Pending"
-                        ? "bg-yellow-100 text-yellow-700"
-                        : "bg-blue-100 text-blue-700"
-                    }
-                  `}
-                >
-                  {item.status}
-                </span>
-
-              </div>
-
-              {/* TECH STACK */}
-              <div className="mt-5">
-
-                <h3 className="font-semibold text-slate-800 mb-2">
-                  Tech Stack
-                </h3>
-
-                <p className="text-slate-500 text-sm">
-                  {item.techStack}
-                </p>
-
-              </div>
-
-              {/* ACTIONS */}
-              <div className="grid grid-cols-2 gap-3 mt-6">
-
-                {/* LIVE */}
-                <a
-                  href={item.live}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="
-                    flex items-center justify-center gap-2
-                    bg-slate-900 text-white
-                    py-3 rounded-xl
-                  "
-                >
-
-                  <Globe size={18} />
-
-                  Live
-
-                </a>
-
-                {/* GITHUB */}
-                <a
-                  href={item.github}
-                  target="_blank"
-                  rel="noreferrer"
-                  className="
-                    flex items-center justify-center gap-2
-                    bg-slate-100 text-slate-700
-                    py-3 rounded-xl
-                  "
-                >
-
-                  <Globe size={18} />
-
-                  Github
-
-                </a>
-
-              </div>
-
-              {/* DOCS */}
-              <button
-                className="
-                  w-full mt-3
-                  flex items-center justify-center gap-2
-                  bg-blue-100 text-blue-700
-                  py-3 rounded-xl
-                "
-              >
-
-                <FileText size={18} />
-
-                Documentation
-
-              </button>
-
-              {/* PREVIEW */}
-              <button
-                className="
-                  w-full mt-3
-                  flex items-center justify-center gap-2
-                  bg-green-100 text-green-700
-                  py-3 rounded-xl
-                "
-              >
-
-                <Eye size={18} />
-
-                Preview Details
-
-              </button>
-
-              {/* EDIT DELETE */}
-              <div className="flex items-center gap-3 mt-3">
-
-                <button
-                  onClick={() =>
-                    handleEdit(item)
-                  }
-                  className="
-                    flex-1 flex items-center
-                    justify-center gap-2
-                    bg-blue-100 text-blue-600
-                    py-3 rounded-xl
-                  "
-                >
-
-                  <Pencil size={18} />
-
-                  Edit
-
-                </button>
-
-                <button
-                  onClick={() =>
-                    handleDeleteClick(item)
-                  }
-                  className="
-                    flex-1 flex items-center
-                    justify-center gap-2
-                    bg-red-100 text-red-600
-                    py-3 rounded-xl
-                  "
-                >
-
-                  <Trash2 size={18} />
-
-                  Delete
-
-                </button>
-
-              </div>
-
-            </div>
-
-          </div>
-
-        ))}
-
-      </div>
-
-      {/* EMPTY */}
-      {filteredProjects.length === 0 && (
-
-        <div
-          className="
-            bg-white rounded-3xl border
-            border-slate-200 p-16
-            text-center mt-6
-          "
-        >
-
-          <h2 className="text-2xl font-bold text-slate-700">
+          <h2 className="text-3xl font-black text-slate-700">
             No Projects Found
           </h2>
 
         </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 
+          {filteredProjects.map(
+            (item) => (
+              <div
+                key={item.id}
+                className="bg-white rounded-3xl overflow-hidden border border-slate-200 shadow-sm"
+              >
+
+                <img
+                  src={
+                    item.image ||
+                    DEFAULT_IMAGE
+                  }
+                  onError={(e) => {
+                    e.currentTarget.src =
+                      DEFAULT_IMAGE;
+                  }}
+                  alt={item.title}
+                  className="w-full h-56 object-cover"
+                />
+
+                <div className="p-5">
+
+                  <div className="flex items-start justify-between gap-3">
+
+                    <h2 className="text-2xl font-black text-slate-800">
+                      {item.title}
+                    </h2>
+
+                    <FolderKanban
+                      size={24}
+                    />
+
+                  </div>
+
+                  <p className="text-slate-500 mt-3 line-clamp-3">
+                    {
+                      item.description
+                    }
+                  </p>
+
+                  <div className="flex flex-wrap gap-2 mt-5">
+
+                    <span className="px-3 py-1 rounded-full bg-slate-100 text-sm text-slate-700">
+                      {categoryMap[
+                        item.category
+                      ] ||
+                        "Category"}
+                    </span>
+
+                    <span
+                      className={`px-3 py-1 rounded-full text-sm ${
+                        item.status ===
+                        "Completed"
+                          ? "bg-green-100 text-green-700"
+                          : item.status ===
+                            "Pending"
+                          ? "bg-yellow-100 text-yellow-700"
+                          : "bg-blue-100 text-blue-700"
+                      }`}
+                    >
+                      {
+                        item.status
+                      }
+                    </span>
+
+                  </div>
+
+                  <div className="mt-5">
+
+                    <h3 className="font-semibold text-slate-800 mb-2">
+                      Tech Stack
+                    </h3>
+
+                    <p className="text-slate-500 text-sm">
+                      {
+                        item.techStack
+                      }
+                    </p>
+
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3 mt-6">
+
+                    <a
+                      href={
+                        item.live
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center justify-center gap-2 bg-slate-900 text-white py-3 rounded-2xl"
+                    >
+
+                      <Globe
+                        size={18}
+                      />
+
+                      Live
+
+                    </a>
+
+                    <a
+                      href={
+                        item.github
+                      }
+                      target="_blank"
+                      rel="noreferrer"
+                      className="flex items-center justify-center gap-2 bg-slate-100 text-slate-700 py-3 rounded-2xl"
+                    >
+
+                      <Globe
+                        size={18}
+                      />
+
+                      Github
+
+                    </a>
+
+                  </div>
+
+                  <button className="w-full mt-3 flex items-center justify-center gap-2 bg-blue-100 text-blue-700 py-3 rounded-2xl">
+
+                    <FileText
+                      size={18}
+                    />
+
+                    Documentation
+
+                  </button>
+
+                  <button className="w-full mt-3 flex items-center justify-center gap-2 bg-green-100 text-green-700 py-3 rounded-2xl">
+
+                    <Eye size={18} />
+
+                    Preview Details
+
+                  </button>
+
+                  <div className="flex items-center gap-3 mt-3">
+
+                    <button
+                      onClick={() => {
+                        setSelectedProject(
+                          item
+                        );
+
+                        setModalOpen(
+                          true
+                        );
+                      }}
+                      className="flex-1 flex items-center justify-center gap-2 bg-blue-100 text-blue-600 py-3 rounded-2xl"
+                    >
+
+                      <Pencil
+                        size={18}
+                      />
+
+                      Edit
+
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        handleDelete(
+                          item
+                        )
+                      }
+                      className="flex-1 flex items-center justify-center gap-2 bg-red-100 text-red-600 py-3 rounded-2xl"
+                    >
+
+                      <Trash2
+                        size={18}
+                      />
+
+                      Delete
+
+                    </button>
+
+                  </div>
+
+                </div>
+
+              </div>
+            )
+          )}
+
+        </div>
       )}
-
-      {/* MODALS */}
 
       <ProjectModal
         open={modalOpen}
-        onClose={() =>
-          setModalOpen(false)
-        }
-        onSave={handleSave}
-        editData={selectedProject}
-      />
+        onClose={() => {
+          setModalOpen(false);
 
-      <DeleteModal
-        open={deleteModal}
-        onClose={() =>
-          setDeleteModal(false)
+          setSelectedProject(
+            null
+          );
+        }}
+        onSave={handleSave}
+        editData={
+          selectedProject
         }
-        onDelete={handleDelete}
+        categories={categories}
       />
 
     </div>
